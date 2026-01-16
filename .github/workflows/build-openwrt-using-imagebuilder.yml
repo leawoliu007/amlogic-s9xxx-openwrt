@@ -25,7 +25,7 @@ on:
       openwrt_board:
         description: "Select device board"
         required: false
-        default: "all"
+        default: "s905x-t95"
         type: choice
         options:
           - all
@@ -239,7 +239,7 @@ on:
       openwrt_ip:
         description: "Set OpenWrt default IP address."
         required: false
-        default: "192.168.1.1"
+        default: "192.168.10.1"
       builder_name:
         description: "Set OpenWrt builder signature."
         required: false
@@ -347,26 +347,11 @@ jobs:
           kernel_usage: ${{ inputs.kernel_usage }}
           builder_name: ${{ inputs.builder_name }}
 
-      - name: Upload the packaged OpenWrt
-        uses: ncipollo/release-action@main
-        if: ${{ env.PACKAGED_STATUS }} == 'success' && !cancelled()
+      - name: Upload OpenWrt to Actions Artifacts
+        uses: actions/upload-artifact@v4
+        if: ${{ env.PACKAGED_STATUS == 'success' && !cancelled() }}
         with:
-          tag: ${{ env.build_tag }}
-          artifacts: ${{ env.PACKAGED_OUTPUTPATH }}/*
-          allowUpdates: true
-          removeArtifacts: false
-          replacesArtifacts: true
-          makeLatest: true
-          token: ${{ secrets.GITHUB_TOKEN }}
-          body: |
-            ### OpenWrt Image information
-            - Default IP: `192.168.1.1`
-            - Default username: `root`
-            - Default password: `password`
-            - Default WIFI name: `OpenWrt`
-            - Default WIFI password: `none`
-            ### Install to EMMC
-            - Login to OpenWrt → `System` → `Amlogic Service` → `Install OpenWrt`
-            ### Applicable platform
-            - 🐧 `arm64`
-            - 🐋 Docker image: https://hub.docker.com/u/ophub
+          name: ${{ env.build_tag }}
+          path: ${{ env.PACKAGED_OUTPUTPATH }}/*
+          if-no-files-found: error
+          retention-days: 90
